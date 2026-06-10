@@ -7,8 +7,14 @@ async function fetchProjects() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Projects:', data);
-    return data;
+    
+    // Filter only published projects
+    const publishedProjects = data.results.filter(project => {
+      return project.properties.Published?.checkbox === true;
+    });
+    
+    console.log('Published Projects:', publishedProjects);
+    return publishedProjects;
   } catch (error) {
     console.error('Error fetching projects:', error);
   }
