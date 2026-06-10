@@ -154,13 +154,6 @@ function createHero(project) {
   const titleBlock = document.createElement('div');
   titleBlock.className = 'project-hero__title-block';
 
-  const kicker = document.createElement('div');
-  kicker.className = 'project-kicker';
-  kicker.textContent =
-    project.category === 'Projekt'
-      ? project.category
-      : `${project.category}-Projekt`;
-
   const title = document.createElement('h1');
   title.className = 'project-hero__title';
   title.append(document.createTextNode(first));
@@ -180,7 +173,7 @@ function createHero(project) {
   lead.className = 'project-hero__lead';
   lead.textContent = project.description;
 
-  titleBlock.append(kicker, title);
+  titleBlock.append(title);
   if (project.year) titleBlock.append(year);
   if (project.description) titleBlock.append(lead);
   section.append(titleBlock);
@@ -192,7 +185,7 @@ function renderProject(project) {
   const sections = [
     createHero(project),
     createMeta(project),
-    createTextSection('MEINE ROLLE', project.responsibility, { left: true }),
+    createTextSection('VERANTWORTLICHKEITEN', project.responsibility, { left: true }),
     createPairedTextSection([
       { title: 'ZIELGRUPPE', text: project.targetAudience },
       { title: 'SCHWIERIGKEIT', text: project.challenges, accent: true }
