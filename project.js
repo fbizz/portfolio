@@ -175,8 +175,8 @@ function createHero(project) {
 
   titleBlock.append(title);
   if (project.year) titleBlock.append(year);
-  if (project.description) titleBlock.append(lead);
   section.append(titleBlock);
+  if (project.description) section.append(lead);
 
   return section;
 }
