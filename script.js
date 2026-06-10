@@ -1,23 +1,17 @@
-require('dotenv').config();
-
-const token = process.env.NOTION_TOKEN;
-const dataSourceId = process.env.NOTION_PROJECTS_DATA_SOURCE_ID;
+console.log("Fetching projects from Notion...");
 
 async function fetchProjects() {
-  const response = await fetch(
-    `https://api.notion.com/v1/databases/${dataSourceId}/query`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-      },
+  try {
+    const response = await fetch('/api/projects');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  );
-  const data = await response.json();
-  return data;
+    const data = await response.json();
+    console.log('Projects:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+  }
 }
 
-fetchProjects().then((projects) => {
-  console.log(projects);
-});
+fetchProjects();
