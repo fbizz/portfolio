@@ -492,6 +492,20 @@ img {
   margin-top: 22px;
 }
 
+.cards__status {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 48px 0;
+  color: var(--color-text-muted);
+  font-size: var(--h3);
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.cards__status--error {
+  color: var(--color-accent);
+}
+
 .card {
   position: relative;
   width: min(100%, var(--card-w));
