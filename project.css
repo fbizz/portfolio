@@ -226,6 +226,8 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(40px, 6vw, 120px);
   padding: 120px 0 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 900px;
 }
 
 .project-gallery--stacked {

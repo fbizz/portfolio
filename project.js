@@ -93,6 +93,8 @@ function createGallery(files, variant, label) {
     image.src = file.url;
     image.alt = imageAlt(file, `${label} ${index + 1}`);
     image.loading = 'lazy';
+    image.decoding = 'async';
+    image.fetchPriority = 'low';
 
     shot.append(image);
     section.append(shot);
@@ -146,6 +148,8 @@ function createHero(project) {
     image.src = headerImage.url;
     image.alt = imageAlt(headerImage, `${project.title} Titelbild`);
     image.loading = 'eager';
+    image.decoding = 'async';
+    image.fetchPriority = 'high';
     section.append(image);
   } else {
     section.classList.add('project-hero--without-image');
