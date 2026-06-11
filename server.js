@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { Readable } from 'stream';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -205,7 +206,9 @@ function normalizeProject(page) {
     ),
     headerImages: getFiles(properties['Header-Img']),
     sketchImages: getFiles(properties['Sketch-Img']),
-    mockupImages: getFiles(properties['Mockup-Img'])
+    mockupImages: getFiles(properties['Mockup-Img']),
+    documentationFiles: getFiles(properties.Documentation),
+    additionalFiles: getFiles(properties.Files)
   };
 }
 
@@ -327,6 +330,82 @@ app.get('/api/projects/:slug', async (req, res, next) => {
 
     res.set('Cache-Control', 'no-store');
     res.json({ project: normalizeProject(page) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/projects/:slug/download/:group/:index', async (req, res, next) => {
+  try {
+    const propertyName = {
+      documentation: 'Documentation',
+      files: 'Files'
+    }[req.params.group];
+    const fileIndex = Number.parseInt(req.params.index, 10);
+
+    if (!propertyName || !Number.isInteger(fileIndex) || fileIndex < 0) {
+      return res.status(400).json({ error: 'Invalid file request' });
+    }
+
+    const data = await queryProjects({
+      filter: {
+        and: [
+          {
+            property: 'Published',
+            checkbox: {
+              equals: true
+            }
+          },
+          {
+            property: 'Slug',
+            rich_text: {
+              equals: req.params.slug
+            }
+          }
+        ]
+      },
+      page_size: 1
+    });
+
+    const page = data.results[0];
+    if (!page) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const file = getFiles(page.properties[propertyName])[fileIndex];
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const fileResponse = await fetch(file.url);
+    if (!fileResponse.ok || !fileResponse.body) {
+      const error = new Error('Could not download file');
+      error.status = fileResponse.status || 502;
+      throw error;
+    }
+
+    const fallbackName =
+      file.name
+        .normalize('NFKD')
+        .replace(/[^\x20-\x7e]/g, '')
+        .replace(/["\\\r\n]/g, '')
+        .trim() || 'download';
+    const encodedName = encodeURIComponent(file.name).replace(
+      /['()*]/g,
+      (character) =>
+        `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+    );
+    res.set({
+      'Cache-Control': 'private, no-store',
+      'Content-Disposition': `inline; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`,
+      'Content-Type':
+        fileResponse.headers.get('content-type') || 'application/octet-stream'
+    });
+
+    const contentLength = fileResponse.headers.get('content-length');
+    if (contentLength) res.set('Content-Length', contentLength);
+
+    Readable.fromWeb(fileResponse.body).pipe(res);
   } catch (error) {
     next(error);
   }
