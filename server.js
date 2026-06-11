@@ -9,6 +9,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+const publicDirectory = path.join(__dirname, 'public');
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const NOTION_PROJECTS_DATA_SOURCE_ID =
@@ -16,7 +17,7 @@ const NOTION_PROJECTS_DATA_SOURCE_ID =
 const NOTION_API_VERSION = '2025-09-03';
 
 app.use(cors());
-app.use(express.static(__dirname));
+app.use(express.static(publicDirectory));
 app.use(express.json());
 
 function getPlainText(items = []) {
@@ -343,6 +344,10 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;
