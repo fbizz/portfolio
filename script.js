@@ -1,15 +1,5 @@
 const projectsContainer = document.querySelector('#content.cards');
 
-function splitTitle(title) {
-  const words = title.trim().split(/\s+/);
-
-  if (words.length === 1) {
-    return [words[0], ''];
-  }
-
-  return [words[0], words.slice(1).join(' ')];
-}
-
 function formatProjectNumber(number) {
   if (number === null || number === undefined) return '--';
   return String(number).padStart(2, '0');
@@ -21,7 +11,6 @@ function formatShortYear(year) {
 }
 
 function createProjectCard(project) {
-  const [titleTop, titleBottom] = splitTitle(project.title);
   const article = document.createElement('article');
   article.className = 'card';
   article.setAttribute(
@@ -35,51 +24,52 @@ function createProjectCard(project) {
   link.setAttribute('aria-label', `Projekt ${project.title} öffnen`);
 
   const visual = document.createElement('div');
-  visual.className = 'card__visual card__visual--feature';
-  visual.setAttribute('aria-hidden', 'true');
+  visual.className = 'card__visual';
 
-  const cover = project.mockupImages?.[0] || project.headerImages?.[0];
+  const cover = project.previewImages?.[0] || project.headerImages?.[0];
   if (cover) {
     const image = document.createElement('img');
     image.className = 'card__image';
     image.src = cover.url;
-    image.alt = '';
+    image.alt = cover.name || `${project.title} Vorschau`;
     image.loading = 'lazy';
     visual.append(image);
+  } else {
+    visual.classList.add('card__visual--empty');
   }
 
   const overlay = document.createElement('div');
   overlay.className = 'card__image-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
   visual.append(overlay);
 
-  const ghost = document.createElement('div');
-  ghost.className = 'card__ghost';
-  ghost.setAttribute('aria-hidden', 'true');
+  const number = document.createElement('span');
+  number.className = 'card__no';
+  number.textContent = formatProjectNumber(project.number);
+  visual.append(number);
 
-  const top = document.createElement('div');
-  top.className = 'card__ghost-top';
-  top.textContent = titleTop;
+  const content = document.createElement('div');
+  content.className = 'card__content';
 
-  const bottom = document.createElement('div');
-  bottom.className = 'card__ghost-bottom';
-  bottom.textContent = titleBottom;
-
-  ghost.append(top, bottom);
+  const title = document.createElement('h3');
+  title.className = 'card__title';
+  title.textContent = project.title;
 
   const meta = document.createElement('div');
   meta.className = 'card__meta';
   meta.setAttribute('aria-label', 'Projektinformationen');
 
-  const number = document.createElement('span');
-  number.className = 'card__no';
-  number.textContent = formatProjectNumber(project.number);
-
   const tag = document.createElement('span');
   tag.className = 'card__tag';
-  tag.textContent = `${project.category}  *  ${formatShortYear(project.year)}`;
+  tag.textContent = project.category;
 
-  meta.append(number, tag);
-  link.append(visual, ghost, meta);
+  const year = document.createElement('span');
+  year.className = 'card__year';
+  year.textContent = formatShortYear(project.year);
+
+  meta.append(tag, year);
+  content.append(title, meta);
+  link.append(visual, content);
   article.append(link);
 
   return article;
