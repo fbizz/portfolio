@@ -72,16 +72,108 @@ function getFiles(property) {
     .filter((file) => file.url);
 }
 
+function getPropertyValues(property) {
+  if (!property) return [];
+
+  if (property.type === 'multi_select') {
+    return property.multi_select.map((option) => option.name);
+  }
+
+  if (property.type === 'select') {
+    return property.select?.name ? [property.select.name] : [];
+  }
+
+  if (property.type === 'rich_text' || property.type === 'title') {
+    const value = getTextProperty(property);
+    return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [];
+  }
+
+  if (property.type === 'rollup') {
+    return getRollupValues(property)
+      .flatMap((item) => {
+        if (item.type === 'multi_select') {
+          return item.multi_select.map((option) => option.name);
+        }
+        if (item.type === 'select') return item.select?.name || [];
+        if (item.type === 'rich_text') return getPlainText(item.rich_text);
+        if (item.type === 'title') return getPlainText(item.title);
+        return [];
+      })
+      .flatMap((value) => String(value).split(','))
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function getFilterTags(properties) {
+  const propertyNames = [
+    'Filter-Tags',
+    'Filter Tags',
+    'Filter-Tags ',
+    'Tags',
+    'Tag',
+    'Context',
+    'Discipline'
+  ];
+
+  return [
+    ...new Set(
+      propertyNames.flatMap((name) => getPropertyValues(properties[name]))
+    )
+  ];
+}
+
 function normalizeCategory(institution) {
   const category = institution.trim();
   if (!category) return 'Projekt';
-  if (category.toLowerCase() === 'self employed') return 'Freelancing';
+  if (['self employed', 'selbstständig'].includes(category.toLowerCase())) {
+    return 'Freelancing';
+  }
   return category;
+}
+
+function inferContextTags(institution, role) {
+  const context = `${institution} ${role}`.toLowerCase();
+  const tags = [];
+
+  if (
+    context.includes('self employed') ||
+    context.includes('selbstständig') ||
+    context.includes('freelance')
+  ) {
+    tags.push('Freelance');
+  }
+  if (context.includes('bachelor')) tags.push('Bachelor');
+  if (
+    context.includes('apprenticeship') ||
+    context.includes('lehre') ||
+    context.includes('lernend')
+  ) {
+    tags.push('Apprenticeship');
+  }
+  if (
+    context.includes('berufsmatur') ||
+    context.includes('bm ') ||
+    context.endsWith(' bm')
+  ) {
+    tags.push('BM');
+  }
+
+  return tags;
 }
 
 function normalizeProject(page) {
   const properties = page.properties;
   const institution = getRollupText(properties.Institution);
+  const role = getRollupText(properties.Role);
+  const filterTags = [
+    ...new Set([
+      ...getFilterTags(properties),
+      ...inferContextTags(institution, role)
+    ])
+  ];
 
   return {
     id: page.id,
@@ -90,7 +182,8 @@ function normalizeProject(page) {
     number: properties.Nmb?.number ?? null,
     year: properties.Year?.number ?? null,
     category: normalizeCategory(institution),
-    role: getRollupText(properties.Role),
+    filterTags,
+    role,
     institution,
     location: getRollupText(properties.Location),
     start: getRollupText(properties.Start),
@@ -100,6 +193,9 @@ function normalizeProject(page) {
     targetAudience: getTextProperty(properties['Target-Audience']),
     challenges: getTextProperty(properties.Challenges),
     verdict: getTextProperty(properties.Verdict),
+    previewImages: getFiles(
+      properties['Preview-Img'] || properties['Preview Img']
+    ),
     headerImages: getFiles(properties['Header-Img']),
     sketchImages: getFiles(properties['Sketch-Img']),
     mockupImages: getFiles(properties['Mockup-Img'])
