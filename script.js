@@ -1,9 +1,5 @@
 const projectsContainer = document.querySelector('#content.cards');
 const filterButtons = [...document.querySelectorAll('.filter[data-filter]')];
-const activeFilters = {
-  context: new Set(),
-  discipline: new Set()
-};
 let projects = [];
 
 function formatProjectNumber(number) {
@@ -18,10 +14,60 @@ function formatShortYear(year) {
 
 function normalizeFilter(value) {
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'freelancing' || normalized === 'self employed') {
+  if (
+    normalized === 'freelancing' ||
+    normalized === 'self employed' ||
+    normalized === 'selbstständig' ||
+    normalized === 'selbständig'
+  ) {
     return 'freelance';
   }
   return normalized;
+}
+
+function getProjectFilterValues(project, group) {
+  const values = new Set((project.filterTags || []).map(normalizeFilter));
+  if (group !== 'context') return values;
+
+  const context = [
+    project.category,
+    project.institution,
+    project.role
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (
+    context.includes('freelance') ||
+    context.includes('self employed') ||
+    context.includes('selbstständig') ||
+    context.includes('selbständig') ||
+    context.includes('freiberuf')
+  ) {
+    values.add('freelance');
+  }
+  if (context.includes('bachelor')) values.add('bachelor');
+  if (
+    context.includes('apprenticeship') ||
+    context.includes('apprentice') ||
+    context.includes('ausbildung') ||
+    context.includes('auszubild') ||
+    context.includes('lehre') ||
+    context.includes('lernend') ||
+    context.includes('lehrling')
+  ) {
+    values.add('apprenticeship');
+  }
+  if (
+    context.includes('berufsmatur') ||
+    context.includes('bm ') ||
+    context.endsWith(' bm')
+  ) {
+    values.add('bm');
+  }
+
+  return values;
 }
 
 function createTitle(title, projectNumber) {
@@ -56,20 +102,6 @@ function createProjectCard(project) {
 
   const content = document.createElement('div');
   content.className = 'card__content';
-
-  const cover = project.previewImages?.[0] || project.headerImages?.[0];
-  if (cover) {
-    const visual = document.createElement('div');
-    visual.className = 'card__visual';
-
-    const image = document.createElement('img');
-    image.className = 'card__image';
-    image.src = cover.url;
-    image.alt = cover.name || `${project.title} Vorschau`;
-    image.loading = 'lazy';
-    visual.append(image);
-    link.append(visual);
-  }
 
   const title = createTitle(project.title, project.number);
 
@@ -108,11 +140,19 @@ function showStatus(message, isError = false) {
 }
 
 function projectMatchesFilters(project) {
-  const tags = new Set((project.filterTags || []).map(normalizeFilter));
+  const groups = [...document.querySelectorAll('[data-filter-group]')];
 
-  return Object.entries(activeFilters).every(([, selected]) => {
-    if (!selected.size) return true;
-    return [...selected].some((filter) => tags.has(normalizeFilter(filter)));
+  return groups.every((groupElement) => {
+    const group = groupElement.dataset.filterGroup;
+    const selected = [
+      ...groupElement.querySelectorAll('.filter[aria-pressed="true"]')
+    ].map((button) => button.dataset.filter);
+
+    if (!selected.length) return true;
+    const values = getProjectFilterValues(project, group);
+    return selected.some((filter) =>
+      values.has(normalizeFilter(filter))
+    );
   });
 }
 
@@ -154,18 +194,8 @@ async function loadProjects() {
 
 filterButtons.forEach((button) => {
   button.addEventListener('click', () => {
-    const group = button.closest('[data-filter-group]')?.dataset.filterGroup;
-    const value = button.dataset.filter;
-    if (!group || !value) return;
-
-    const selected = activeFilters[group];
-    if (selected.has(value)) {
-      selected.delete(value);
-    } else {
-      selected.add(value);
-    }
-
-    button.setAttribute('aria-pressed', String(selected.has(value)));
+    const isActive = button.getAttribute('aria-pressed') === 'true';
+    button.setAttribute('aria-pressed', String(!isActive));
     renderProjects();
   });
 });

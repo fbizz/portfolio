@@ -141,15 +141,21 @@ function inferContextTags(institution, role) {
   if (
     context.includes('self employed') ||
     context.includes('selbstständig') ||
-    context.includes('freelance')
+    context.includes('selbständig') ||
+    context.includes('freelance') ||
+    context.includes('freiberuf')
   ) {
     tags.push('Freelance');
   }
   if (context.includes('bachelor')) tags.push('Bachelor');
   if (
     context.includes('apprenticeship') ||
+    context.includes('apprentice') ||
+    context.includes('ausbildung') ||
+    context.includes('auszubild') ||
     context.includes('lehre') ||
-    context.includes('lernend')
+    context.includes('lernend') ||
+    context.includes('lehrling')
   ) {
     tags.push('Apprenticeship');
   }
