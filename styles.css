@@ -437,7 +437,7 @@ img {
 
 .project-filters {
   width: min(760px, calc(100% - (2 * var(--col-1))));
-  margin: -8px var(--col-1) 0 auto;
+  margin: 8px var(--col-1) 0 auto;
 }
 
 .project-filters__group {
@@ -462,12 +462,27 @@ img {
   color: var(--color-text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 15.6px;
+  font-size: clamp(14px, 1.35vw, 19px);
   font-weight: 500;
   line-height: 1;
   padding: 5px 0;
+  white-space: nowrap;
   text-transform: uppercase;
   transition: color 160ms ease;
+}
+
+[data-filter-group="discipline"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.project-filters__row {
+  display: flex;
+  justify-content: flex-end;
+  gap: clamp(18px, 2vw, 32px);
 }
 
 .filter:hover,
@@ -640,10 +655,6 @@ img {
     font-size: clamp(86.4px, 10.08vw, 144px);
   }
 
-  .project-filters {
-    margin-top: -14px;
-  }
-
   .card {
     width: min(72%, 720px);
   }
@@ -652,7 +663,7 @@ img {
 @media (max-width: 700px) {
   .project-filters {
     width: auto;
-    margin: 55px var(--col-1) 0;
+    margin: 66px var(--col-1) 0;
   }
 
   .project-filters__group {
@@ -664,6 +675,15 @@ img {
   }
 
   .project-filters__options {
+    justify-content: flex-start;
+  }
+
+  [data-filter-group="discipline"] {
+    align-items: flex-start;
+  }
+
+  .project-filters__row {
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 

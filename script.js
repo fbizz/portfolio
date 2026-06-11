@@ -1,6 +1,13 @@
 const projectsContainer = document.querySelector('#content.cards');
-const filterButtons = [...document.querySelectorAll('.filter[data-filter]')];
+const filtersContainer = document.querySelector('.project-filters');
+const contextFilterValues = new Set([
+  'apprenticeship',
+  'freelance',
+  'bm',
+  'bachelor'
+]);
 let projects = [];
+let availableTagOptions = [];
 
 function formatProjectNumber(number) {
   if (number === null || number === undefined) return '--';
@@ -68,6 +75,98 @@ function getProjectFilterValues(project, group) {
   }
 
   return values;
+}
+
+function getAvailableFilters() {
+  const filters = {
+    context: new Map(),
+    discipline: new Map()
+  };
+
+  availableTagOptions.forEach((tag) => {
+    const normalizedValue = normalizeFilter(tag);
+    const group = contextFilterValues.has(normalizedValue)
+      ? 'context'
+      : 'discipline';
+    filters[group].set(normalizedValue, tag);
+  });
+
+  projects.forEach((project) => {
+    getProjectFilterValues(project, 'context').forEach((normalizedValue) => {
+      if (!contextFilterValues.has(normalizedValue)) return;
+
+      const label =
+        (project.filterTags || []).find(
+          (tag) => normalizeFilter(tag) === normalizedValue
+        ) ||
+        {
+          apprenticeship: 'Apprenticeship',
+          freelance: 'Freelance',
+          bm: 'BM',
+          bachelor: 'Bachelor'
+        }[normalizedValue];
+
+      filters.context.set(normalizedValue, label);
+    });
+
+    (project.filterTags || []).forEach((tag) => {
+      const normalizedValue = normalizeFilter(tag);
+      if (contextFilterValues.has(normalizedValue)) return;
+      filters.discipline.set(normalizedValue, tag);
+    });
+  });
+
+  return filters;
+}
+
+function createFilterButton(value, label) {
+  const button = document.createElement('button');
+  button.className = 'filter';
+  button.type = 'button';
+  button.dataset.filter = value;
+  button.setAttribute('aria-pressed', 'false');
+  button.textContent = label;
+  return button;
+}
+
+function renderFilters() {
+  const availableFilters = getAvailableFilters();
+
+  Object.entries(availableFilters).forEach(([group, values]) => {
+    const groupElement = document.querySelector(
+      `[data-filter-group="${group}"]`
+    );
+    if (!groupElement) return;
+
+    const sortedValues = [...values.entries()].sort(([, labelA], [, labelB]) =>
+      labelA.localeCompare(labelB, 'de', { sensitivity: 'base' })
+    );
+
+    if (group === 'discipline') {
+      const rows = [];
+
+      for (let index = 0; index < sortedValues.length; index += 4) {
+        const row = document.createElement('div');
+        row.className = 'project-filters__row';
+        row.append(
+          ...sortedValues
+            .slice(index, index + 4)
+            .map(([value, label]) => createFilterButton(value, label))
+        );
+        rows.push(row);
+      }
+
+      groupElement.replaceChildren(...rows);
+    } else {
+      groupElement.replaceChildren(
+        ...sortedValues.map(([value, label]) =>
+          createFilterButton(value, label)
+        )
+      );
+    }
+
+    groupElement.parentElement.hidden = !sortedValues.length;
+  });
 }
 
 function createTitle(title, projectNumber) {
@@ -179,12 +278,14 @@ async function loadProjects() {
     }
 
     projects = data.projects;
+    availableTagOptions = data.tagOptions || [];
 
     if (!projects.length) {
       showStatus('Zurzeit sind keine Projekte veröffentlicht.');
       return;
     }
 
+    renderFilters();
     renderProjects();
   } catch (error) {
     console.error('Error loading projects:', error);
@@ -192,12 +293,13 @@ async function loadProjects() {
   }
 }
 
-filterButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const isActive = button.getAttribute('aria-pressed') === 'true';
-    button.setAttribute('aria-pressed', String(!isActive));
-    renderProjects();
-  });
+filtersContainer?.addEventListener('click', (event) => {
+  const button = event.target.closest('.filter[data-filter]');
+  if (!button || !filtersContainer.contains(button)) return;
+
+  const isActive = button.getAttribute('aria-pressed') === 'true';
+  button.setAttribute('aria-pressed', String(!isActive));
+  renderProjects();
 });
 
 if (projectsContainer) {

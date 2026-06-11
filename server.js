@@ -241,30 +241,57 @@ async function queryProjects(body) {
   return data;
 }
 
+async function getProjectTagOptions() {
+  const response = await fetch(
+    `https://api.notion.com/v1/data_sources/${NOTION_PROJECTS_DATA_SOURCE_ID}`,
+    {
+      headers: {
+        Authorization: `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': NOTION_API_VERSION
+      }
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data.message || `Notion API error: ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return (data.properties?.Tag?.multi_select?.options || []).map(
+    (option) => option.name
+  );
+}
+
 app.get('/api/projects', async (req, res, next) => {
   try {
-    const data = await queryProjects({
-      filter: {
-        property: 'Published',
-        checkbox: {
-          equals: true
-        }
-      },
-      sorts: [
-        {
-          property: 'Nmb',
-          direction: 'ascending'
-        }
-      ],
-      page_size: 100
-    });
+    const [data, tagOptions] = await Promise.all([
+      queryProjects({
+        filter: {
+          property: 'Published',
+          checkbox: {
+            equals: true
+          }
+        },
+        sorts: [
+          {
+            property: 'Nmb',
+            direction: 'ascending'
+          }
+        ],
+        page_size: 100
+      }),
+      getProjectTagOptions()
+    ]);
 
     const projects = data.results
       .map(normalizeProject)
       .filter((project) => project.title && project.slug);
 
     res.set('Cache-Control', 'no-store');
-    res.json({ projects });
+    res.json({ projects, tagOptions });
   } catch (error) {
     next(error);
   }
