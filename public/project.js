@@ -1,5 +1,12 @@
 const projectContainer = document.querySelector('#content');
 const descriptionMeta = document.querySelector('meta[name="description"]');
+const contextFilterValues = new Set([
+  'apprenticeship',
+  'freelance',
+  'freelancing',
+  'bm',
+  'bachelor'
+]);
 
 function splitTitle(title) {
   const words = title.trim().split(/\s+/);
@@ -7,6 +14,12 @@ function splitTitle(title) {
     first: words.shift() || '',
     rest: words.join(' ')
   };
+}
+
+function getDisciplineTag(project) {
+  return project.filterTags?.find(
+    (tag) => !contextFilterValues.has(tag.trim().toLowerCase())
+  );
 }
 
 function imageAlt(file, fallback) {
@@ -137,6 +150,7 @@ function createMeta(project) {
 
 function createHero(project) {
   const { first, rest } = splitTitle(project.title);
+  const disciplineTag = getDisciplineTag(project);
   const section = document.createElement('section');
   section.className = 'project-hero';
   section.setAttribute('aria-label', 'Projektübersicht');
@@ -158,6 +172,10 @@ function createHero(project) {
   const titleBlock = document.createElement('div');
   titleBlock.className = 'project-hero__title-block';
 
+  const tag = document.createElement('div');
+  tag.className = 'project-hero__tag';
+  tag.textContent = disciplineTag || '';
+
   const title = document.createElement('h1');
   title.className = 'project-hero__title';
   title.append(document.createTextNode(first));
@@ -177,6 +195,7 @@ function createHero(project) {
   lead.className = 'project-hero__lead';
   lead.textContent = project.description;
 
+  if (disciplineTag) titleBlock.append(tag);
   titleBlock.append(title);
   if (project.year) titleBlock.append(year);
   section.append(titleBlock);

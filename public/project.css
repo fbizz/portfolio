@@ -136,6 +136,16 @@
   letter-spacing: 0.02em;
 }
 
+.project-hero__tag {
+  color: var(--color-accent);
+  font-family: var(--font-sans);
+  font-size: var(--h3);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .project-hero__title {
   margin: 0;
   display: flex;
@@ -160,6 +170,10 @@
 }
 
 .project-hero__title-block > * + * {
+  margin-top: clamp(18px, 2vw, 30px);
+}
+
+.project-hero__tag + .project-hero__title {
   margin-top: clamp(18px, 2vw, 30px);
 }
 
