@@ -116,6 +116,85 @@ function createGallery(files, variant, label) {
   return section;
 }
 
+function createDownloads(project) {
+  const groups = [
+    {
+      key: 'documentation',
+      label: 'DOKUMENTATION',
+      files: project.documentationFiles || []
+    },
+    {
+      key: 'files',
+      label: 'DATEIEN',
+      files: project.additionalFiles || []
+    }
+  ].filter((group) => group.files.length);
+
+  if (!groups.length) return null;
+
+  const section = document.createElement('section');
+  section.className = 'project-downloads';
+  section.setAttribute('aria-labelledby', 'project-downloads-title');
+
+  const intro = document.createElement('div');
+  intro.className = 'project-downloads__intro';
+
+  const title = document.createElement('h2');
+  title.id = 'project-downloads-title';
+  title.className = 'project-downloads__title';
+  title.textContent = 'WEITERE INFORMATIONEN';
+
+  const description = document.createElement('p');
+  description.className = 'project-downloads__description';
+  description.textContent =
+    'Zusätzliche Dokumente und Dateien zu diesem Projekt herunterladen.';
+
+  intro.append(title, description);
+
+  const groupList = document.createElement('div');
+  groupList.className = 'project-downloads__groups';
+
+  groups.forEach(({ key, label, files }) => {
+    const group = document.createElement('div');
+    group.className = 'project-downloads__group';
+
+    const heading = document.createElement('h3');
+    heading.className = 'project-downloads__group-title';
+    heading.textContent = label;
+
+    const fileList = document.createElement('ul');
+    fileList.className = 'project-downloads__list';
+
+    files.forEach((file, index) => {
+      const item = document.createElement('li');
+      item.className = 'project-downloads__item';
+
+      const link = document.createElement('a');
+      link.className = 'project-downloads__link';
+      link.href = `/api/projects/${encodeURIComponent(
+        project.slug
+      )}/download/${key}/${index}`;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.setAttribute('aria-label', `${file.name} öffnen`);
+
+      const name = document.createElement('span');
+      name.className = 'project-downloads__file-name';
+      name.textContent = file.name;
+
+      link.append(name);
+      item.append(link);
+      fileList.append(item);
+    });
+
+    group.append(heading, fileList);
+    groupList.append(group);
+  });
+
+  section.append(intro, groupList);
+  return section;
+}
+
 function createMeta(project) {
   const values = [
     ['Rolle', project.role],
@@ -215,7 +294,8 @@ function renderProject(project) {
     ]),
     createGallery(project.sketchImages, 'sketches', 'Skizzen'),
     createTextSection('DAS ERGEBNIS', project.verdict, { left: true }),
-    createGallery(project.mockupImages, 'stacked', 'Mockups')
+    createGallery(project.mockupImages, 'stacked', 'Mockups'),
+    createDownloads(project)
   ].filter(Boolean);
 
   projectContainer.replaceChildren(...sections);
