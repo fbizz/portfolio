@@ -114,8 +114,10 @@ The application reads the following properties:
 | `Header-Img`      | Files                | Detail page hero image           |
 | `Sketch-Img`      | Files                | Sketch gallery                   |
 | `Mockup-Img`      | Files                | Mockup gallery                   |
+| `Video`           | URL                  | Video shown instead of mockups    |
 | `Documentation`   | Files                | Downloadable documentation       |
 | `Files`           | Files                | Additional downloads             |
+| `Links`           | URL or rich text     | Additional external links        |
 
 Projects are sorted by `Nmb` in ascending order. The `Slug` value must be unique because it is used to retrieve individual projects.
 
