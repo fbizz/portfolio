@@ -5,10 +5,11 @@ A custom portfolio website for Fabio Lozza, a multimedia and graphic designer ba
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Notion API](https://img.shields.io/badge/Notion-API-000000?logo=notion&logoColor=white)](https://developers.notion.com/)
+[![Module GitHub](https://img.shields.io/badge/GitHub-000000?logo=github&logoColor=white)](https://github.com/fbizz/web-tech-2026)
 
 ## Academic Context
 
-This project was created as part of the **Web Technologies** module in the **Bachelor of Arts in Design, Interaction Design** program at the Zurich University of the Arts (ZHdK).
+This project was created as part of the [Web Technologies](https://github.com/Jones-S/zhdk-web-technologies-2026) module in the [Bachelor of Arts in Design, Interaction Design](https://www.zhdk.ch/studium/design/ba-design-interaction-design) program at the [Zurich University of the Arts (ZHdK)](https://www.zhdk.ch/en/zurich-university-of-the-arts-1).
 
 ### Module Content
 
