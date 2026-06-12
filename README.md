@@ -87,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm start`   | Starts the Express server               |
 | `npm run dev` | Starts the server in Node.js watch mode |
 
-## Notion Configuration
+## [Notion Configuration](https://fabiobase.notion.site/3561c3a33768808ebef6cde273355f58?v=3561c3a33768808d8403000cf4772ab3&source=copy_link)
 
 The integration must be connected to the Notion data source identified by `NOTION_PROJECTS_DATA_SOURCE_ID`. Only entries with `Published` enabled are returned by the API.
 
