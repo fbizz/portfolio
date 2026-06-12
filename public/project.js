@@ -116,6 +116,95 @@ function createGallery(files, variant, label) {
   return section;
 }
 
+function getVideoThumbnail(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.replace(/^www\./, '');
+    let videoId = '';
+
+    if (hostname === 'youtu.be') {
+      videoId = parsedUrl.pathname.split('/').filter(Boolean)[0] || '';
+    } else if (
+      hostname === 'youtube.com' ||
+      hostname === 'm.youtube.com' ||
+      hostname === 'youtube-nocookie.com'
+    ) {
+      videoId =
+        parsedUrl.searchParams.get('v') ||
+        parsedUrl.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/)?.[1] ||
+        '';
+    }
+
+    if (videoId) {
+      return `https://i.ytimg.com/vi/${encodeURIComponent(
+        videoId
+      )}/hqdefault.jpg`;
+    }
+
+    if (hostname === 'vimeo.com' || hostname.endsWith('.vimeo.com')) {
+      const vimeoId = parsedUrl.pathname.match(/\/(\d+)(?:$|\/)/)?.[1];
+      if (vimeoId) {
+        return `https://vumbnail.com/${encodeURIComponent(vimeoId)}.jpg`;
+      }
+    }
+  } catch (error) {
+    console.warn('Invalid video URL:', url, error);
+  }
+
+  return '';
+}
+
+function createVideoGallery(videoUrls, fallbackImages, projectTitle) {
+  if (!videoUrls.length) return createGallery(fallbackImages, 'stacked', 'Mockups');
+
+  const section = document.createElement('section');
+  section.className = 'project-gallery project-gallery--stacked project-videos';
+  section.setAttribute('aria-label', 'Videos');
+
+  videoUrls.forEach((url, index) => {
+    const thumbnail = getVideoThumbnail(url);
+    const link = document.createElement('a');
+    link.className = 'project-shot project-video';
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute(
+      'aria-label',
+      `${projectTitle} Video ${index + 1} in neuem Tab öffnen`
+    );
+
+    if (thumbnail) {
+      const image = document.createElement('img');
+      image.src = thumbnail;
+      image.alt = `${projectTitle} Video ${index + 1}`;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.fetchPriority = 'low';
+      link.append(image);
+    } else {
+      link.classList.add('project-video--without-thumbnail');
+    }
+
+    const play = document.createElement('span');
+    play.className = 'project-video__play';
+    play.setAttribute('aria-hidden', 'true');
+    play.textContent = 'PLAY';
+
+    link.append(play);
+    section.append(link);
+  });
+
+  return section;
+}
+
+function linkLabel(url, index) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return `Link ${index + 1}`;
+  }
+}
+
 function createDownloads(project) {
   const groups = [
     {
@@ -127,6 +216,15 @@ function createDownloads(project) {
       key: 'files',
       label: 'DATEIEN',
       files: project.additionalFiles || []
+    },
+    {
+      key: 'links',
+      label: 'LINKS',
+      files: (project.links || []).map((url, index) => ({
+        name: linkLabel(url, index),
+        url
+      })),
+      external: true
     }
   ].filter((group) => group.files.length);
 
@@ -147,14 +245,14 @@ function createDownloads(project) {
   const description = document.createElement('p');
   description.className = 'project-downloads__description';
   description.textContent =
-    'Zusätzliche Dokumente und Dateien zu diesem Projekt herunterladen.';
+    'Zusätzliche Dokumente, Dateien und Links zu diesem Projekt.';
 
   intro.append(title, description);
 
   const groupList = document.createElement('div');
   groupList.className = 'project-downloads__groups';
 
-  groups.forEach(({ key, label, files }) => {
+  groups.forEach(({ key, label, files, external = false }) => {
     const group = document.createElement('div');
     group.className = 'project-downloads__group';
 
@@ -171,11 +269,13 @@ function createDownloads(project) {
 
       const link = document.createElement('a');
       link.className = 'project-downloads__link';
-      link.href = `/api/projects/${encodeURIComponent(
-        project.slug
-      )}/download/${key}/${index}`;
+      link.href = external
+        ? file.url
+        : `/api/projects/${encodeURIComponent(
+            project.slug
+          )}/download/${key}/${index}`;
       link.target = '_blank';
-      link.rel = 'noopener';
+      link.rel = 'noopener noreferrer';
       link.setAttribute('aria-label', `${file.name} öffnen`);
 
       const name = document.createElement('span');
@@ -294,7 +394,11 @@ function renderProject(project) {
     ]),
     createGallery(project.sketchImages, 'sketches', 'Skizzen'),
     createTextSection('DAS ERGEBNIS', project.verdict, { left: true }),
-    createGallery(project.mockupImages, 'stacked', 'Mockups'),
+    createVideoGallery(
+      project.videoUrls || [],
+      project.mockupImages || [],
+      project.title
+    ),
     createDownloads(project)
   ].filter(Boolean);
 

@@ -74,6 +74,41 @@ function getFiles(property) {
     .filter((file) => file.url);
 }
 
+function isPublicUrl(value) {
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function getUrls(property) {
+  if (!property) return [];
+
+  if (property.type === 'url') {
+    return isPublicUrl(property.url) ? [property.url] : [];
+  }
+
+  if (property.type === 'rich_text' || property.type === 'title') {
+    return property[property.type]
+      .flatMap((item) => {
+        const linkedUrl = item.href || item.text?.link?.url;
+        if (linkedUrl) return linkedUrl;
+
+        return (item.plain_text || '')
+          .split(/[\n,]/)
+          .map((value) => value.trim());
+      })
+      .filter(isPublicUrl);
+  }
+
+  if (property.type === 'rollup') {
+    return getRollupValues(property).flatMap(getUrls);
+  }
+
+  return [];
+}
+
 function getPropertyValues(property) {
   if (!property) return [];
 
@@ -207,8 +242,10 @@ function normalizeProject(page) {
     headerImages: getFiles(properties['Header-Img']),
     sketchImages: getFiles(properties['Sketch-Img']),
     mockupImages: getFiles(properties['Mockup-Img']),
+    videoUrls: getUrls(properties.Video),
     documentationFiles: getFiles(properties.Documentation),
-    additionalFiles: getFiles(properties.Files)
+    additionalFiles: getFiles(properties.Files),
+    links: getUrls(properties.Links)
   };
 }
 
